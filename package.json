@@ -1,0 +1,64 @@
+{
+  "name": "sword-ai-bot",
+  "version": "1.0.0",
+  "description": "WhatsApp bot with web interface for session management",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js",
+    "test": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/G12347/Sword-ai.git"
+  },
+  "keywords": [
+    "whatsapp-bot",
+    "baileys",
+    "session-manager"
+  ],
+  "author": "G12347",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/G12347/Sword-ai/issues"
+  },
+  "homepage": "https://github.com/G12347/Sword-ai#readme",
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.5.0",
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "qrcode": "^1.5.3",
+    "axios": "^0.27.2",
+    "chalk": "^4.1.2",
+    "cheerio": "^1.0.0-rc.10",
+    "chokidar": "^3.6.0",
+    "dotenv": "^16.0.2",
+    "file-type": "^16.5.3",
+    "fluent-ffmpeg": "^2.1.2",
+    "form-data": "^4.0.0",
+    "g-i-s": "^2.1.7",
+    "jimp": "^1.6.0",
+    "link-preview-js": "^3.0.14",
+    "lodash.debounce": "^4.0.8",
+    "moment-timezone": "^0.5.34",
+    "mongoose": "^8.15.1",
+    "node-cache": "^5.1.2",
+    "node-cron": "^3.0.0",
+    "node-fetch": "^2.6.1",
+    "node-webpmux": "^3.1.1",
+    "pdfkit": "^0.17.1",
+    "pino": "^7.9.2",
+    "pm2": "^6.0.5",
+    "sequelize": "^6.21.4",
+    "sqlite": "^5.1.1",
+    "sqlite3": "^5.0.11",
+    "uuid": "^9.0.1",
+    "wa-sticker-formatter": "^4.4.4",
+    "word-list": "^4.1.0",
+    "yt-search": "^2.11.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
