@@ -1,4 +1,4 @@
-// index.js - MAIN BOT FILE WITH WEB SERVER - FIXED VERSION
+// index.js - MAIN BOT FILE WITH PHONE NUMBER LINKING SUPPORT
 import { makeWASocket, useMultiFileAuthState, fetchLatestBaileysVersion } from '@whiskeysockets/baileys';
 import express from 'express';
 import cors from 'cors';
@@ -8,11 +8,6 @@ import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-// Your existing bot imports and configuration
-// [YOUR EXISTING BOT IMPORTS HERE]
-// import config from './config.js';
-// import { yourBotFunctions } from './core/whatever.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -29,23 +24,28 @@ if (!fs.existsSync(SESS_DIR)) {
   fs.mkdirSync(SESS_DIR, { recursive: true });
 }
 
-// Session generation function (from startsession.js) - FIXED
-async function startNewSession(ownerNumber = '', onQR) {
+// Session generation function with PHONE NUMBER LINKING
+async function startNewSession(ownerNumber = '', onCode) {
   try {
-    console.log('🔐 Starting WhatsApp session...');
+    console.log('🔐 Starting WhatsApp session with phone linking...');
     
     const { version } = await fetchLatestBaileysVersion();
     const sessionId = 'session_' + Date.now();
     const authFolder = path.join(SESS_DIR, `auth_${sessionId}`);
     
-    // FIX: Use MultiFileAuthState instead of SingleFile
     const { state, saveCreds } = await useMultiFileAuthState(authFolder);
 
     const sock = makeWASocket({
       version,
       auth: state,
-      printQRInTerminal: true,
-      logger: { level: 'silent' }
+      // DISABLE QR CODE, ENABLE PHONE LINKING
+      printQRInTerminal: false,
+      logger: { level: 'silent' },
+      // ADD PHONE LINKING CONFIG
+      phoneResponse: async (phoneNumber) => {
+        console.log('📱 Phone number detected:', phoneNumber);
+        return phoneNumber;
+      }
     });
 
     sock.ev.on('creds.update', saveCreds);
@@ -56,14 +56,20 @@ async function startNewSession(ownerNumber = '', onQR) {
       }, 120000);
 
       sock.ev.on('connection.update', async (update) => {
-        const { connection, qr } = update;
+        const { connection, qr, isNewLogin, code } = update;
         
-        if (qr && typeof onQR === 'function') {
-          onQR(qr);
+        console.log('📡 Connection update:', { connection, isNewLogin, code });
+        
+        // HANDLE PHONE LINKING CODE (8-digit code)
+        if (code && typeof onCode === 'function') {
+          console.log('🔢 8-digit linking code received:', code);
+          onCode(code);
         }
         
+        // Handle successful connection
         if (connection === 'open') {
           clearTimeout(timeout);
+          console.log('✅✅✅ WhatsApp CONNECTED SUCCESSFULLY!');
           
           if (ownerNumber) {
             try {
@@ -71,12 +77,19 @@ async function startNewSession(ownerNumber = '', onQR) {
               await sock.sendMessage(jid, {
                 text: `✅ SWORD BOT - SESSION CREATED\n\nSession ID: ${sessionId}\n\nUse this ID in your bot configuration.`
               });
+              console.log('✅ Confirmation message sent to owner');
             } catch (e) {
-              console.warn('Could not send message:', e.message);
+              console.warn('⚠️ Could not send message:', e.message);
             }
           }
           
           resolve(sessionId);
+        }
+        
+        // Handle connection errors
+        if (connection === 'close') {
+          clearTimeout(timeout);
+          reject(new Error('Connection closed unexpectedly'));
         }
       });
     });
@@ -86,36 +99,46 @@ async function startNewSession(ownerNumber = '', onQR) {
   }
 }
 
-// Web API Routes
+// Web API Routes - UPDATED FOR PHONE LINKING
 app.post('/api/start-session', async (req, res) => {
   try {
-    const { ownerNumber, returnQRCode } = req.body;
+    const { ownerNumber, phoneNumber } = req.body;
+    
+    if (!phoneNumber) {
+      return res.status(400).json({
+        error: 'Phone number required',
+        message: 'Please provide a phone number for linking'
+      });
+    }
     
     const tempId = Date.now().toString();
     
     const sessionResult = await new Promise(async (resolve, reject) => {
       try {
-        const sessionId = await startNewSession(ownerNumber || '', (qr) => {
+        const sessionId = await startNewSession(ownerNumber || '', (linkingCode) => {
+          // Store the 8-digit linking code
           activeSessions.set(tempId, {
-            qr,
-            status: 'qr_ready',
+            linkingCode,
+            status: 'code_ready',
+            phoneNumber: phoneNumber,
             ownerNumber: ownerNumber || '',
             timestamp: Date.now()
           });
           
-          if (returnQRCode) {
-            resolve({
-              tempId,
-              qr,
-              status: 'qr_ready',
-              message: 'Scan QR code with WhatsApp'
-            });
-          }
+          // Return the linking code to frontend
+          resolve({
+            tempId,
+            linkingCode,
+            status: 'code_ready',
+            message: 'Use this 8-digit code in WhatsApp > Linked Devices'
+          });
         });
         
+        // Session connected successfully
         activeSessions.set(tempId, {
           sessionId,
           status: 'connected',
+          phoneNumber: phoneNumber,
           ownerNumber: ownerNumber || '',
           timestamp: Date.now()
         });
@@ -134,6 +157,7 @@ app.post('/api/start-session', async (req, res) => {
     res.json(sessionResult);
     
   } catch (error) {
+    console.error('💥 API Error:', error);
     res.status(500).json({
       error: 'Failed to start session',
       details: error.message
@@ -162,7 +186,7 @@ app.get('/api/session-status', (req, res) => {
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'OK', 
-    service: 'Sword Bot + Session Generator',
+    service: 'Sword Bot + Phone Linking',
     timestamp: new Date().toISOString()
   });
 });
@@ -176,15 +200,9 @@ app.get('/session.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'session.html'));
 });
 
-// YOUR EXISTING BOT CODE GOES HERE
-// [YOUR ACTUAL BOT LOGIC - message handling, commands, etc.]
-
 // Start everything
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Sword Bot + Session Generator running on port ${PORT}`);
+  console.log(`🚀 Sword Bot + Phone Linking running on port ${PORT}`);
   console.log(`📱 Session Page: http://0.0.0.0:${PORT}/session.html`);
   console.log(`🩺 Health: http://0.0.0.0:${PORT}/health`);
-  
-  // Initialize your bot here
-  // initializeYourBot();
 });
