@@ -1,0 +1,461 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Start WhatsApp Session — Sword</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <style>
+    /* Minimal, self-contained styles to look modern/fancy */
+    :root{
+      --bg:#0f1724; --card:#0b1220; --muted:#94a3b8; --accent:#7c3aed;
+      --glass: rgba(255,255,255,0.03);
+      --primary: #1a1a2e; --border: #3a3a5a; --text: #e0e0e0;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    
+    [data-theme="light"] {
+      --bg: #f0f2f5;
+      --primary: #ffffff;
+      --card: #f8f9fa;
+      --accent: #6a0dad;
+      --text: #1c1e21;
+      --muted: #65676b;
+      --border: #ced4da;
+      --glass: rgba(0,0,0,0.03);
+    }
+
+    html,body{height:100%;margin:0;background:var(--bg);color:var(--text);transition:background-color 0.3s ease, color 0.3s ease}
+    .wrap{max-width:920px;margin:40px auto;padding:24px}
+    .card{background:var(--card);border-radius:14px;padding:20px;box-shadow:0 6px 30px rgba(0,0,0,0.1);border:1px solid var(--border)}
+    h1{margin:0 0 8px;font-size:20px}
+    p.lead{color:var(--muted);margin-top:4px;font-size:14px}
+    .row{display:flex;gap:12px;align-items:center;margin-top:16px}
+    input[type="text"]{background:var(--glass);border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:8px;outline:none;min-width:220px}
+    button{background:var(--accent);border:none;padding:10px 14px;color:white;border-radius:10px;cursor:pointer;font-weight:600;box-shadow:0 6px 18px rgba(124,58,237,0.16);transition:all 0.2s ease}
+    button:hover{opacity:0.9;transform:translateY(-1px)}
+    button.secondary{background:transparent;border:1px solid var(--border);color:var(--muted);box-shadow:none}
+    button.secondary:hover{background:var(--glass)}
+    .muted{color:var(--muted);font-size:13px}
+    .qr-wrap{display:flex;gap:18px;align-items:center;margin-top:18px}
+    .qr-box{width:220px;height:220px;background:#fff;border-radius:8px;display:grid;place-items:center;padding:10px;display:flex;align-items:center;justify-content:center}
+    .info{padding:12px;background:var(--glass);border-radius:10px;color:var(--muted);font-size:13px;border:1px solid var(--border)}
+    .status{margin-top:12px;padding:10px;border-radius:8px;background:var(--glass);font-weight:600;border:1px solid var(--border)}
+    .success{color:#10b981}
+    .center{text-align:center}
+    footer{margin-top:18px;color:var(--muted);font-size:13px;text-align:center}
+    
+    /* Header and Navigation Styles */
+    header{display:flex;justify-content:space-between;align-items:center;padding:1rem 1.5rem;background:var(--primary);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:1000}
+    .logo{font-weight:800;font-size:1.9rem}
+    .header-nav{display:flex;gap:10px;align-items:center}
+    .header-nav a{color:var(--text);text-decoration:none;padding:8px 12px;border-radius:6px;transition:background 0.2s}
+    .header-nav a:hover{background:var(--glass)}
+    .menu-toggle{display:none;background:none;border:none;color:var(--text);cursor:pointer;font-size:20px;padding:8px}
+    
+    /* Theme Toggle Button */
+    .theme-toggle {
+      background: none;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      padding: 8px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    
+    .theme-toggle:hover {
+      background-color: var(--accent);
+      color: white;
+    }
+    
+    /* Mobile Navigation */
+    .mobile-nav{position:fixed;top:0;right:-100%;width:250px;height:100%;background:var(--primary);transition:right 0.25s;padding-top:4rem;z-index:1001;border-left:1px solid var(--border)}
+    .mobile-nav.active{right:0}
+    .mobile-nav a{display:block;padding:1rem 1.5rem;color:var(--text);text-decoration:none;border-bottom:1px solid var(--border)}
+    .mobile-nav a:hover{background:var(--glass)}
+    
+    @media(max-width:700px){
+      .row{flex-direction:column;align-items:stretch} 
+      .qr-wrap{flex-direction:column}
+    }
+    @media(max-width:768px){
+      .menu-toggle{display:block} 
+      .header-nav a{display:none}
+    }
+  </style>
+  <!-- QR code renderer -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+  <header>
+    <div class="logo">Sword Bot</div>
+    <nav class="header-nav">
+      <button id="menu-toggle" class="menu-toggle" aria-label="Open menu">☰</button>
+      <a href="/index.html">Home</a>
+      <a href="/session.html">Session</a>
+      <a href="/plugins.html">Plugins</a>
+      <a href="/deploy.html">Deploy</a>
+      <a href="/suggest.html">Suggest</a>
+      <a href="https://github.com/G12347/Sword-ai" target="_blank">Repo</a>
+      <button id="theme-toggle" class="theme-toggle" aria-label="Toggle theme">
+        <i class="fas fa-moon"></i>
+      </button>
+    </nav>
+  </header>
+  
+  <nav id="mobile-nav" class="mobile-nav" aria-hidden="true">
+    <div style="position:absolute;top:8px;right:10px;">
+      <button id="close-menu" style="background:none;border:none;color:inherit;font-size:28px;cursor:pointer">×</button>
+    </div>
+    <a href="/index.html">Home</a>
+    <a href="/session.html">Session</a>
+    <a href="/plugins.html">Plugins</a>
+    <a href="/deploy.html">Deploy</a>
+    <a href="/suggest.html">Suggest</a>
+    <a href="https://github.com/G12347/Sword-ai" target="_blank">Repo</a>
+  </nav>
+  
+  <div class="wrap">
+    <div class="card">
+      <h1>Link a WhatsApp session</h1>
+      <p class="lead">Enter the owner's phone number or choose to scan a QR code. When linked successfully, the bot will DM the owner with the session ID and the ID will appear below.</p>
+
+      <div class="row">
+        <input id="ownerNumber" type="text" placeholder="Owner number (e.g. 2348012345678)">
+        <button id="byNumberBtn">Link by number (send to owner)</button>
+        <button id="byQRBtn" class="secondary">Show QR to scan</button>
+      </div>
+
+      <div class="qr-wrap" id="qrArea" style="display:none">
+        <div class="qr-box" id="qrBox">
+          <div id="qrPlaceholder" class="muted">QR will appear here</div>
+        </div>
+        <div style="flex:1">
+          <div class="info" id="qrInfo">Scan the QR using WhatsApp mobile. If you prefer the bot to DM the owner, use the phone number option.</div>
+          <div class="status" id="statusText">Idle</div>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:18px">
+        <input id="sessionId" type="text" readonly placeholder="Session ID will be shown here (after linking)" style="flex:1">
+        <button id="copyBtn" class="secondary">Copy</button>
+      </div>
+
+      <div style="margin-top:10px" id="extraInfo" class="muted">If the owner number field is left empty and you request a QR, you will receive a QR to scan to link this session.</div>
+    </div>
+
+    <footer>Need help? Follow the step-by-step guide on the bot server or ask me to walk you through deployment.</footer>
+  </div>
+
+  <script>
+  // Enhanced Theme detection and toggle functionality
+  const themeToggle = document.getElementById('theme-toggle');
+  const themeIcon = themeToggle ? themeToggle.querySelector('i') : null;
+
+  // Function to detect system preference
+  function getSystemTheme() {
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+      return 'light';
+    }
+    return 'dark';
+  }
+
+  // Function to set theme
+  function setTheme(theme) {
+    try {
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem('sword-theme', theme);
+      updateThemeIcon(theme);
+    } catch (e) {
+      console.warn('Could not save theme preference:', e);
+    }
+  }
+
+  // Function to update theme icon
+  function updateThemeIcon(theme) {
+    if (themeIcon) {
+      if (theme === 'dark') {
+        themeIcon.className = 'fas fa-moon';
+      } else {
+        themeIcon.className = 'fas fa-sun';
+      }
+    }
+  }
+
+  // Initialize theme immediately to prevent flash
+  function initTheme() {
+    let savedTheme;
+    try {
+      savedTheme = localStorage.getItem('sword-theme');
+    } catch (e) {
+      console.warn('Could not access localStorage:', e);
+    }
+    
+    if (savedTheme) {
+      // Use saved theme if available
+      setTheme(savedTheme);
+    } else {
+      // Use system preference if no saved theme
+      const systemTheme = getSystemTheme();
+      setTheme(systemTheme);
+    }
+  }
+
+  // Set theme immediately (before DOMContentLoaded)
+  initTheme();
+
+  // Theme toggle event
+  if (themeToggle) {
+    themeToggle.addEventListener('click', () => {
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      setTheme(newTheme);
+    });
+  }
+
+  // Listen for system theme changes (if user changes system theme)
+  if (window.matchMedia) {
+    window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', (e) => {
+      // Only apply system theme if user hasn't manually set a preference
+      let savedTheme;
+      try {
+        savedTheme = localStorage.getItem('sword-theme');
+      } catch (e) {
+        console.warn('Could not access localStorage:', e);
+      }
+      
+      if (!savedTheme) {
+        const newSystemTheme = e.matches ? 'light' : 'dark';
+        setTheme(newSystemTheme);
+      }
+    });
+  }
+
+  // Mobile menu functionality
+  document.addEventListener('DOMContentLoaded', function() {
+    const mobileNav = document.getElementById('mobile-nav');
+    const menuToggle = document.getElementById('menu-toggle');
+    const closeMenuBtn = document.getElementById('close-menu');
+    
+    // Ensure menu starts hidden
+    if(mobileNav) mobileNav.classList.remove('active');
+    
+    if (menuToggle) {
+      menuToggle.addEventListener('click', () => {
+        mobileNav.classList.add('active');
+        mobileNav.setAttribute('aria-hidden', 'false');
+      });
+    }
+    
+    if (closeMenuBtn) {
+      closeMenuBtn.addEventListener('click', () => {
+        mobileNav.classList.remove('active');
+        mobileNav.setAttribute('aria-hidden', 'true');
+      });
+    }
+
+    // Close mobile menu when clicking on a link
+    const mobileLinks = mobileNav.querySelectorAll('a');
+    mobileLinks.forEach(link => {
+      link.addEventListener('click', () => {
+        mobileNav.classList.remove('active');
+        mobileNav.setAttribute('aria-hidden', 'true');
+      });
+    });
+  });
+
+  // Session management functionality (your existing code remains the same)
+  const byNumberBtn = document.getElementById('byNumberBtn');
+  const byQRBtn = document.getElementById('byQRBtn');
+  const ownerInput = document.getElementById('ownerNumber');
+  const qrArea = document.getElementById('qrArea');
+  const qrBox = document.getElementById('qrBox');
+  const qrPlaceholder = document.getElementById('qrPlaceholder');
+  const statusText = document.getElementById('statusText');
+  const sessionInput = document.getElementById('sessionId');
+  const copyBtn = document.getElementById('copyBtn');
+  let pollingTimer = null;
+
+  function setStatus(t, cls) {
+    statusText.textContent = t;
+    statusText.className = 'status' + (cls ? ' ' + cls : '');
+  }
+
+  if (copyBtn) {
+    copyBtn.addEventListener('click', () => {
+      if (!sessionInput.value) return alert('No session ID to copy');
+      navigator.clipboard.writeText(sessionInput.value).then(() => alert('Copied Session ID!'));
+    });
+  }
+
+  async function startByNumber() {
+    const ownerNumber = ownerInput.value.trim();
+    if (!ownerNumber) return alert('Please enter owner phone number first.');
+    setStatus('Requesting bot to link session (will DM owner)...');
+    try {
+      const res = await fetch('/api/start-session', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ ownerNumber, returnQRCode:false })
+      });
+      const j = await res.json();
+      if (!res.ok) {
+        setStatus('Error: ' + (j.error || JSON.stringify(j)));
+        return;
+      }
+      if (j.sessionId) {
+        sessionInput.value = j.sessionId;
+        setStatus('Linked ✔ Session ID received', 'success');
+      } else if (j.tempId) {
+        // fallback: poll
+        pollStatus(j.tempId);
+        setStatus('Pending... polling for session');
+      } else {
+        setStatus('Unexpected response: ' + JSON.stringify(j));
+      }
+    } catch (err) {
+      setStatus('Error connecting: ' + err);
+    }
+  }
+
+  async function startByQR() {
+    qrArea.style.display = 'flex';
+    qrBox.innerHTML = '<div class="muted">Waiting for QR…</div>';
+    setStatus('Requesting QR from bot (may take a few seconds)...');
+    try {
+      const res = await fetch('/api/start-session', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ returnQRCode: true })
+      });
+      const j = await res.json();
+      if (!res.ok) {
+        setStatus('Error: ' + (j.error || JSON.stringify(j)));
+        return;
+      }
+      
+      // UPDATED QR CODE RENDERING - FIXED VERSION
+      if (j.qr) {
+        qrBox.innerHTML = '';
+        
+        // Check if it's already a data URL (image)
+        if (typeof j.qr === 'string' && j.qr.startsWith('data:image')) {
+          // Server already converted to image - use directly
+          const img = document.createElement('img');
+          img.src = j.qr;
+          img.style.width = '100%';
+          img.style.height = '100%';
+          img.style.borderRadius = '8px';
+          img.alt = 'WhatsApp QR Code';
+          qrBox.appendChild(img);
+          setStatus('Scan the QR with WhatsApp on your phone.');
+        } else {
+          // Raw QR string - convert to image using QRCode library
+          const canvas = document.createElement('canvas');
+          qrBox.appendChild(canvas);
+          try {
+            QRCode.toCanvas(canvas, j.qr, { 
+              width: 200,
+              margin: 2,
+              color: {
+                dark: '#000000',
+                light: '#FFFFFF'
+              }
+            }, function(error) {
+              if (error) {
+                console.error('QR render error:', error);
+                qrBox.innerHTML = '<div class="muted">Failed to render QR. Check console.</div>';
+                setStatus('Failed to render QR code');
+              } else {
+                setStatus('Scan the QR with WhatsApp on your phone.');
+              }
+            });
+          } catch (e) {
+            qrBox.innerHTML = '<div class="muted">Failed to render QR</div>';
+            setStatus('Failed to render QR: ' + e);
+          }
+        }
+      } else if (j.tempId) {
+        setStatus('QR pending — polling for updates...');
+        pollStatus(j.tempId);
+      } else {
+        setStatus('Unexpected response: ' + JSON.stringify(j));
+      }
+    } catch (err) {
+      setStatus('Error: ' + err);
+    }
+  }
+
+  async function pollStatus(tempId) {
+    if (pollingTimer) clearInterval(pollingTimer);
+    pollingTimer = setInterval(async () => {
+      try {
+        const res = await fetch('/api/session-status?tempId=' + encodeURIComponent(tempId));
+        if (!res.ok) return;
+        const j = await res.json();
+        if (j.status === 'qr' && j.qr) {
+          // show QR if not shown already
+          if (!document.querySelector('#qrBox img') && !document.querySelector('#qrBox canvas')) {
+            qrArea.style.display = 'flex';
+            qrBox.innerHTML = '';
+            
+            // UPDATED: Handle both data URL and raw QR
+            if (typeof j.qr === 'string' && j.qr.startsWith('data:image')) {
+              const img = document.createElement('img');
+              img.src = j.qr;
+              img.style.width = '100%';
+              img.style.height = '100%';
+              img.style.borderRadius = '8px';
+              qrBox.appendChild(img);
+            } else {
+              const canvas = document.createElement('canvas');
+              qrBox.appendChild(canvas);
+              try { 
+                QRCode.toCanvas(canvas, j.qr, { 
+                  width: 200,
+                  margin: 2,
+                  color: {
+                    dark: '#000000',
+                    light: '#FFFFFF'
+                  }
+                }); 
+              } catch(e){ 
+                qrBox.innerHTML = '<div class="muted">QR ready — please refresh</div>';
+              }
+            }
+            setStatus('QR ready — scan with WhatsApp');
+          }
+        } else if (j.status === 'connected' && j.sessionId) {
+          sessionInput.value = j.sessionId;
+          setStatus('Linked ✔ Session created', 'success');
+          clearInterval(pollingTimer);
+          pollingTimer = null;
+        } else if (j.status === 'pending') {
+          setStatus('Pending — waiting for QR or approval...');
+        } else if (j.status === 'error') {
+          setStatus('Error: ' + (j.error || 'unknown'));
+          clearInterval(pollingTimer);
+          pollingTimer = null;
+        }
+      } catch (err) {
+        console.warn('poll error', err);
+      }
+    }, 2500);
+  }
+
+  if (byNumberBtn) byNumberBtn.addEventListener('click', startByNumber);
+  if (byQRBtn) byQRBtn.addEventListener('click', startByQR);
+  try{
+        const prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+        document.body.setAttribute('data-theme', prefersLight? 'light' : 'dark');
+    }catch(e){ document.body.setAttribute('data-theme','dark'); }
+</script>
+</body>
+</html>

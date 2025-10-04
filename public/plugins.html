@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sword Plugins</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Updated color scheme to match index.html */
+        :root {
+            --bg: #0f0f1a;
+            --primary: #1a1a2e;
+            --sec: #2a2a4a;
+            --accent: #8a2be2;
+            --text: #e0e0e0;
+            --muted: #a0a0b0;
+            --border: #3a3a5a;
+        }
+        
+        [data-theme="light"] {
+    --bg: #f0f2f5;
+    --primary: #ffffff;
+    --sec: #f8f9fa;
+    --accent: #6a0dad;
+    --text: #1c1e21;
+    --muted: #65676b;
+    --border: #ced4da;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        /* Navbar - Updated colors */
+        .navbar {
+            background-color: var(--primary);
+            padding: 1rem 2rem;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .nav-logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+        }
+
+        .nav-item a {
+            color: var(--text);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            transition: color 0.3s ease;
+        }
+
+        .nav-item a:hover {
+            color: var(--accent);
+        }
+
+        .nav-toggler {
+            display: none;
+            font-size: 1.8rem;
+            cursor: pointer;
+            color: var(--text);
+        }
+
+        /* Main Content */
+        main {
+            padding-top: 80px;
+            padding: 100px 2rem 2rem;
+        }
+
+        .page {
+            display: none;
+            max-width: 1000px;
+            margin: 0 auto;
+            animation: fadeIn 0.5s;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        h1, h2 {
+            color: var(--accent);
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        /* Home Page */
+        .hero {
+            text-align: center;
+            padding: 4rem 0;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            color: var(--muted);
+        }
+
+        button {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #6a0dad;
+        }
+
+        /* Auth Page */
+        .auth-container {
+            max-width: 400px;
+            margin: 2rem auto;
+            background-color: var(--primary);
+            padding: 2rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+        
+        .auth-form form {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .auth-form input {
+            background-color: var(--sec);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 10px;
+            margin-bottom: 1rem;
+            border-radius: 5px;
+        }
+        
+        .auth-form p {
+            margin-top: 1rem;
+            text-align: center;
+        }
+        
+        .auth-form a {
+            color: var(--accent);
+            cursor: pointer;
+        }
+
+        /* Plugins Page */
+        #no-plugins-msg {
+            text-align: center;
+            color: var(--muted);
+            font-size: 1.1rem;
+            padding: 2rem;
+        }
+
+        .plugin-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .plugin-card {
+            background-color: var(--primary);
+            padding: 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border: 1px solid var(--border);
+        }
+
+        .plugin-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+        }
+
+        .plugin-card h3 {
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+        }
+
+        /* Create Page */
+        .create-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .create-form input,
+        .create-form textarea {
+            width: 100%;
+            padding: 10px;
+            background-color: var(--primary);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 5px;
+            font-family: inherit;
+        }
+        
+        .create-form textarea {
+            min-height: 400px;
+            resize: vertical;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        /* View Plugin Page */
+        .back-button {
+            margin-bottom: 1rem;
+            background: none;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+        }
+        
+        .plugin-actions {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            justify-content: center;
+        }
+        
+        .plugin-actions button {
+            background-color: var(--primary);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+        }
+
+        .code-container {
+            position: relative;
+            background-color: var(--primary);
+            border-radius: 5px;
+            padding: 1rem;
+            overflow-x: auto;
+            border: 1px solid var(--border);
+        }
+        
+        .code-container pre, .code-container code {
+            margin: 0;
+            padding: 0;
+            background: none;
+            color: var(--text);
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9rem;
+        }
+        
+        .no-copy-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            user-select: none; /* Modern browsers */
+            -webkit-user-select: none; /* Safari */
+            -ms-user-select: none; /* IE 10+ */
+        }
+
+        /* Responsive Design (Mobile View) */
+        @media (max-width: 768px) {
+            .nav-menu {
+                display: none;
+                flex-direction: column;
+                width: 100%;
+                position: absolute;
+                top: 60px;
+                left: 0;
+                background-color: var(--primary);
+            }
+            
+            .nav-menu.active {
+                display: flex;
+            }
+            
+            .nav-item {
+                text-align: center;
+                padding: 1rem 0;
+                border-top: 1px solid var(--border);
+            }
+            
+            .nav-toggler {
+                display: block;
+            }
+        }
+        
+        /* Theme Toggle Button */
+.theme-toggle {
+    background: none;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.theme-toggle:hover {
+    background-color: var(--accent);
+    color: white;
+}
+body {
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    transition: background-color 0.3s ease, color 0.3s ease; /* Add this line */
+}
+    </style>
+</head>
+<body>
+
+    <header>
+        <nav class="navbar">
+            <div class="nav-container">
+                <a href="#" class="nav-logo" onclick="showPage('home')">Sword</a>
+                <ul class="nav-menu">
+    <li class="nav-item"><a href="#" onclick="showPage('plugins')">Plugins</a></li>
+    <li class="nav-item"><a href="#" onclick="showPage('create')">Create</a></li>
+    <li class="nav-item" id="login-nav"><a href="#" onclick="showPage('login')">Login</a></li>
+    <li class="nav-item">
+        <button id="theme-toggle" class="theme-toggle" aria-label="Toggle theme">
+            <i class="fas fa-moon"></i>
+        </button>
+    </li>
+</ul>
+                <div class="nav-toggler">
+                    <i class="fas fa-bars"></i>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section id="home" class="page active">
+            <div class="hero">
+                <h1>Welcome to Sword Plugins</h1>
+                <p>Discover, create, and share plugins for the Sword WhatsApp Bot.</p>
+                <button onclick="showPage('plugins')">Browse Plugins</button>
+            </div>
+        </section>
+
+        <section id="login" class="page">
+            <div class="auth-container">
+                <div class="auth-form login-form">
+                    <h2>Login to Sword</h2>
+                    <form onsubmit="event.preventDefault(); alert('Backend needed for login!');">
+                        <input type="email" placeholder="Email" required>
+                        <input type="password" placeholder="Password" required>
+                        <button type="submit">Login</button>
+                    </form>
+                    <p>Don't have an account? <a href="#" onclick="toggleAuth()">Create one</a></p>
+                </div>
+                <div class="auth-form register-form" style="display: none;">
+                    <h2>Create an Account</h2>
+                    <form onsubmit="event.preventDefault(); alert('Backend needed for registration!');">
+                        <input type="text" placeholder="Username" required>
+                        <input type="email" placeholder="Email" required>
+                        <input type="password" placeholder="Password" required>
+                        <button type="submit">Create Account</button>
+                    </form>
+                    <p>Already have an account? <a href="#" onclick="toggleAuth()">Login</a></p>
+                </div>
+            </div>
+        </section>
+
+        <section id="plugins" class="page">
+            <h2>Approved Plugins</h2>
+            <p id="no-plugins-msg">No plugins have been approved yet. Check back later!</p>
+            <div class="plugin-grid" id="plugin-grid">
+                </div>
+        </section>
+
+        <section id="create" class="page">
+            <h2>Create a New Plugin</h2>
+            <div class="create-form">
+                <input type="text" id="plugin-name" placeholder="Plugin Name (e.g., sticker-maker)">
+                <textarea id="plugin-code" placeholder="/*\nEnter your plugin code here...\n*/"></textarea>
+                <button onclick="submitPlugin()">Submit for Approval</button>
+            </div>
+        </section>
+
+        <section id="view-plugin" class="page">
+            <button class="back-button" onclick="showPage('plugins')"><i class="fas fa-arrow-left"></i> Back to Plugins</button>
+            <h2 id="view-plugin-name"></h2>
+            <div class="plugin-actions">
+                <button id="copy-url-btn"><i class="fas fa-link"></i> Copy URL</button>
+                <button id="copy-cmd-btn"><i class="fas fa-terminal"></i> Copy Command</button>
+            </div>
+            <div class="code-container">
+                <pre><code id="view-plugin-code"></code></pre>
+                <div class="no-copy-overlay"></div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const navToggler = document.querySelector('.nav-toggler');
+            const navMenu = document.querySelector('.nav-menu');
+
+            navToggler.addEventListener('click', () => {
+                navMenu.classList.toggle('active');
+            });
+        });
+
+        const API_URL = 'http://localhost:3000'; // The address of your backend
+
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            document.querySelector('.nav-menu').classList.remove('active');
+        }
+
+        function toggleAuth() {
+            const loginForm = document.querySelector('.login-form');
+            const registerForm = document.querySelector('.register-form');
+            if (loginForm.style.display === 'none') {
+                loginForm.style.display = 'block';
+                registerForm.style.display = 'none';
+            } else {
+                loginForm.style.display = 'none';
+                registerForm.style.display = 'block';
+            }
+        }
+
+        async function loadPlugins() {
+            const grid = document.getElementById('plugin-grid');
+            const noPluginsMsg = document.getElementById('no-plugins-msg');
+            grid.innerHTML = 'Loading...';
+
+            try {
+                const response = await fetch(`${API_URL}/api/plugins`);
+                const plugins = await response.json();
+
+                grid.innerHTML = '';
+                if (plugins.length === 0) {
+                    noPluginsMsg.style.display = 'block';
+                } else {
+                    noPluginsMsg.style.display = 'none';
+                    plugins.forEach(plugin => {
+                        const card = document.createElement('div');
+                        card.className = 'plugin-card';
+                        // For simplicity, we just use the name for description for now
+                        card.innerHTML = `<h3>${plugin.name}</h3><p>ID: ${plugin.id}</p>`;
+                        card.onclick = () => showPluginDetails(plugin);
+                        grid.appendChild(card);
+                    });
+                }
+            } catch (error) {
+                grid.innerHTML = '<p>Could not fetch plugins. Is the backend server running?</p>';
+                console.error('Failed to load plugins:', error);
+            }
+        }
+
+        function showPluginDetails(plugin) {
+            if (!plugin) return;
+
+            document.getElementById('view-plugin-name').textContent = plugin.name;
+            document.getElementById('view-plugin-code').textContent = plugin.code;
+
+            const copyUrlBtn = document.getElementById('copy-url-btn');
+            const copyCmdBtn = document.getElementById('copy-cmd-btn');
+
+            copyUrlBtn.onclick = () => {
+                navigator.clipboard.writeText(plugin.url)
+                    .then(() => alert('URL copied!'))
+                    .catch(() => alert('Failed to copy.'));
+            };
+
+            copyCmdBtn.onclick = () => {
+                const command = `.plugin ${plugin.url}`;
+                navigator.clipboard.writeText(command)
+                    .then(() => alert('Command copied!'))
+                    .catch(() => alert('Failed to copy.'));
+            };
+
+            showPage('view-plugin');
+        }
+
+        async function submitPlugin() {
+            const name = document.getElementById('plugin-name').value;
+            const code = document.getElementById('plugin-code').value;
+
+            if (!name.trim() || !code.trim()) {
+                alert('Please provide both a name and code.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/api/submit`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ name, code }),
+                });
+
+                const result = await response.json();
+                alert(result.message);
+                if(response.ok) {
+                    document.getElementById('plugin-name').value = '';
+                    document.getElementById('plugin-code').value = '';
+                    showPage('plugins');
+                }
+            } catch (error) {
+                alert('Submission failed. Is the backend server running?');
+                console.error('Submission error:', error);
+            }
+        }
+            // Theme toggle functionality
+const themeToggle = document.getElementById('theme-toggle');
+const themeIcon = themeToggle.querySelector('i');
+
+// Load saved theme or default to dark
+const savedTheme = localStorage.getItem('sword-theme') || 'dark';
+document.documentElement.setAttribute('data-theme', savedTheme);
+updateThemeIcon(savedTheme);
+
+themeToggle.addEventListener('click', () => {
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('sword-theme', newTheme);
+    updateThemeIcon(newTheme);
+});
+
+function updateThemeIcon(theme) {
+    if (theme === 'dark') {
+        themeIcon.className = 'fas fa-moon';
+    } else {
+        themeIcon.className = 'fas fa-sun';
+    }
+}
+        // Initial Load
+        showPage('home');
+        loadPlugins();
+    </script>
+</body>
+</html>
