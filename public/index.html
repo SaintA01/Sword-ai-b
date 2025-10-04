@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Sword Bot — Index</title>
+<style>
+:root{--bg:#0f0f1a;--primary:#1a1a2e;--sec:#2a2a4a;--accent:#8a2be2;--text:#e0e0e0;--muted:#a0a0b0;--border:#3a3a5a}
+[data-theme="light"]{--bg:#f0f2f5;--primary:#fff;--sec:#f8f9fa;--accent:#6a0dad;--text:#1c1e21;--muted:#65676b;--border:#ced4da}
+*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
+body{background:var(--bg);color:var(--text);transition:all .15s}
+header{display:flex;justify-content:space-between;align-items:center;padding:1rem 1.5rem;background:var(--primary);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:1000}
+.logo{font-weight:800;font-size:1.9rem}
+.header-nav{display:flex;gap:10px;align-items:center}
+.menu-toggle{display:none;background:none;border:none;color:var(--text);cursor:pointer;font-size:20px}
+.mobile-nav{position:fixed;top:0;right:-100%;width:250px;height:100%;background:var(--primary);transition:right .25s;padding-top:4rem;z-index:1001}
+.mobile-nav.active{right:0}
+.mobile-nav a{display:block;padding:1rem 1.5rem;color:var(--text);text-decoration:none}
+main{max-width:1100px;margin:0 auto;padding:2rem 1.5rem}
+.home-btn{display:block;margin:18px auto 0;padding:.9rem 1.2rem;background:var(--accent);color:#fff;border-radius:8px;border:none;text-decoration:none;font-weight:700;width:220px;text-align:center}
+@media(max-width:768px){.menu-toggle{display:block} .header-nav a{display:none}}
+</style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">Sword Bot</div>
+        <nav class="header-nav">
+            <button id="menu-toggle" class="menu-toggle" aria-label="Open menu">☰</button>
+            <a href="/index.html">Home</a>
+            <a href="/session.html">Session</a>
+            <a href="/plugins.html">Plugins</a>
+            <a href="/deploy.html">Deploy</a>
+            <a href="/suggest.html">Suggest</a>
+            <a href="https://github.com/G12347/Sword-ai" target="_blank">Repo</a>
+            
+        </nav>
+    </header>
+
+    <nav id="mobile-nav" class="mobile-nav" aria-hidden="true"><div style="position:absolute;top:8px;right:10px;"><button id="close-menu" style="background:none;border:none;color:inherit;font-size:28px;cursor:pointer">×</button></div>
+        <a href="/index.html">Home</a>
+        <a href="/session.html">Session</a>
+        <a href="/plugins.html">Plugins</a>
+        <a href="/deploy.html">Deploy</a>
+        <a href="/suggest.html">Suggest</a>
+        <a href="https://github.com/G12347/Sword-ai" target="_blank">Repo</a>
+    </nav>
+
+<main>
+
+    <div class="page-header" style="text-align:center;margin-bottom:1.5rem">
+        <h1 style="font-size:2.4rem;margin-bottom:0.25rem">Sword Wa Bot</h1>
+        <p style="color:var(--muted)">Powerful, customizable WhatsApp bot framework.</p>
+        <div class="github-stats" style="display:flex;justify-content:center;gap:12px;margin-top:12px">
+            <div id="stars" style="background:var(--sec);padding:8px 12px;border-radius:8px">⭐ -- Stars</div>
+            <div id="forks" style="background:var(--sec);padding:8px 12px;border-radius:8px">🍴 -- Forks</div>
+        </div>
+    </div>
+
+    <div class="home-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:18px">
+        <a class="grid-card" href="/session.html" style="background:var(--primary);padding:16px;border-radius:10px;text-decoration:none;color:inherit"><h3>🔑 Session</h3><p>Generate session IDs and pair phones.</p></a>
+        <a class="grid-card" href="/deploy.html" style="background:var(--primary);padding:16px;border-radius:10px;text-decoration:none;color:inherit"><h3>🚀 Deploy</h3><p>Steps to deploy the bot.</p></a>
+        <a class="grid-card" href="/plugins.html" style="background:var(--primary);padding:16px;border-radius:10px;text-decoration:none;color:inherit"><h3>🧩 Plugins</h3><p>Upload and manage plugins (login required).</p></a>
+        <a class="grid-card" href="/suggest.html" style="background:var(--primary);padding:16px;border-radius:10px;text-decoration:none;color:inherit"><h3>💡 Suggest</h3><p>Send improvements or ideas.</p></a>
+        <a class="grid-card" href="https://github.com/G12347/Sword-ai" target="_blank" style="background:var(--primary);padding:16px;border-radius:10px;text-decoration:none;color:inherit"><h3>📁 Repo</h3><p>View the project on GitHub.</p></a>
+    </div>
+
+</main>
+
+<script>
+// Ensure mobile menu is hidden on load and toggle works
+document.addEventListener('DOMContentLoaded', function(){
+    const mobileNav = document.getElementById('mobile-nav');
+    const menuToggle = document.getElementById('menu-toggle');
+    const setApiBtn = document.getElementById('set-api-btn');
+    // ensure menu starts hidden
+    if(mobileNav) mobileNav.classList.remove('active');
+    if(menuToggle) menuToggle.addEventListener('click', ()=> mobileNav.classList.toggle('active'));
+    const closeMenuBtn = document.getElementById('close-menu'); if(closeMenuBtn) closeMenuBtn.addEventListener('click', ()=> mobileNav.classList.remove('active'));
+
+    // API setter: store base in localStorage
+    if(setApiBtn){
+        setApiBtn.addEventListener('click', ()=>{
+            const current = localStorage.getItem('sword_api_base') || '';
+            const url = prompt('Enter API base URL (example: https://your-server.com)', current);
+            if(url!==null){
+                localStorage.setItem('sword_api_base', url.trim());
+                alert('API_BASE saved. Current: ' + (url.trim()|| '(empty)'));
+            }
+        });
+    }
+
+    // Apply theme based on user system preference (no cross-tab persistence)
+    try{
+        const prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+        document.body.setAttribute('data-theme', prefersLight? 'light' : 'dark');
+    }catch(e){ document.body.setAttribute('data-theme','dark'); }
+
+    // expose API_BASE variable for other scripts
+    window.API_BASE = "";
+});
+</script>
+
+
+
+
+<script>
+// fetch GitHub repo stats and populate stars/forks, with retries
+async function loadGitHubStats(retries=2){
+    try{
+        const resp = await fetch('https://api.github.com/repos/G12347/Sword-ai');
+        if(!resp.ok) throw new Error('GitHub API HTTP ' + resp.status);
+        const j = await resp.json();
+        if(j && typeof j.stargazers_count === 'number') document.getElementById('stars').textContent = `⭐ ${j.stargazers_count} Stars`;
+        if(j && typeof j.forks_count === 'number') document.getElementById('forks').textContent = `🍴 ${j.forks_count} Forks`;
+    }catch(e){
+        console.warn('GitHub stats load failed', e);
+        if(retries>0) setTimeout(()=>loadGitHubStats(retries-1), 1500);
+    }
+}
+document.addEventListener('DOMContentLoaded', loadGitHubStats);
+</script>
+</body>
+</html>
