@@ -39,9 +39,11 @@
     .muted{color:var(--muted);font-size:13px}
     .qr-wrap{display:flex;gap:18px;align-items:center;margin-top:18px}
     .qr-box{width:220px;height:220px;background:#fff;border-radius:8px;display:grid;place-items:center;padding:10px;display:flex;align-items:center;justify-content:center}
+    .code-box{width:220px;height:220px;background:var(--glass);border:2px solid var(--accent);border-radius:8px;display:grid;place-items:center;padding:10px;font-size:32px;font-weight:bold;color:var(--accent)}
     .info{padding:12px;background:var(--glass);border-radius:10px;color:var(--muted);font-size:13px;border:1px solid var(--border)}
     .status{margin-top:12px;padding:10px;border-radius:8px;background:var(--glass);font-weight:600;border:1px solid var(--border)}
     .success{color:#10b981}
+    .error{color:#ef4444}
     .center{text-align:center}
     footer{margin-top:18px;color:var(--muted);font-size:13px;text-align:center}
     
@@ -125,30 +127,57 @@
   <div class="wrap">
     <div class="card">
       <h1>Link a WhatsApp session</h1>
-      <p class="lead">Enter the owner's phone number or choose to scan a QR code. When linked successfully, the bot will DM the owner with the session ID and the ID will appear below.</p>
+      <p class="lead">Choose how you want to link your WhatsApp account - using phone number with 8-digit code or QR code scanning.</p>
 
-      <div class="row">
-        <input id="ownerNumber" type="text" placeholder="Owner number (e.g. 2348012345678)">
-        <button id="byNumberBtn">Link by number (send to owner)</button>
-        <button id="byQRBtn" class="secondary">Show QR to scan</button>
+      <!-- Phone Number Linking Section -->
+      <div style="margin-bottom: 20px; padding: 15px; background: var(--glass); border-radius: 10px; border: 1px solid var(--border);">
+        <h3 style="margin-top: 0; color: var(--accent);"><i class="fas fa-mobile-alt"></i> Link with Phone Number</h3>
+        <div class="row">
+          <input id="phoneNumber" type="text" placeholder="Your phone number (e.g. 2348012345678)" style="flex: 1">
+          <button id="byNumberBtn">Get 8-digit Code</button>
+        </div>
+        <p class="muted" style="margin-top: 8px;">Enter your phone number to receive an 8-digit linking code for WhatsApp.</p>
       </div>
 
-      <div class="qr-wrap" id="qrArea" style="display:none">
-        <div class="qr-box" id="qrBox">
+      <!-- QR Code Linking Section -->
+      <div style="padding: 15px; background: var(--glass); border-radius: 10px; border: 1px solid var(--border);">
+        <h3 style="margin-top: 0; color: var(--accent);"><i class="fas fa-qrcode"></i> Link with QR Code</h3>
+        <div class="row">
+          <input id="ownerNumber" type="text" placeholder="Owner number (optional, for confirmation)">
+          <button id="byQRBtn" class="secondary">Show QR Code</button>
+        </div>
+        <p class="muted" style="margin-top: 8px;">Scan QR code using WhatsApp > Linked Devices > Link a Device.</p>
+      </div>
+
+      <!-- Display Area for QR Code or Linking Code -->
+      <div class="qr-wrap" id="displayArea" style="display:none">
+        <div class="qr-box" id="qrBox" style="display:none">
           <div id="qrPlaceholder" class="muted">QR will appear here</div>
         </div>
+        <div class="code-box" id="codeBox" style="display:none">
+          <div id="codePlaceholder">00000000</div>
+        </div>
         <div style="flex:1">
-          <div class="info" id="qrInfo">Scan the QR using WhatsApp mobile. If you prefer the bot to DM the owner, use the phone number option.</div>
+          <div class="info" id="displayInfo">Instructions will appear here</div>
           <div class="status" id="statusText">Idle</div>
         </div>
       </div>
 
+      <!-- Session ID Display -->
       <div class="row" style="margin-top:18px">
         <input id="sessionId" type="text" readonly placeholder="Session ID will be shown here (after linking)" style="flex:1">
         <button id="copyBtn" class="secondary">Copy</button>
       </div>
 
-      <div style="margin-top:10px" id="extraInfo" class="muted">If the owner number field is left empty and you request a QR, you will receive a QR to scan to link this session.</div>
+      <div style="margin-top:10px" id="extraInfo" class="muted">
+        <strong>Phone Linking Instructions:</strong> 
+        <ol style="margin: 8px 0; padding-left: 20px;">
+          <li>Get the 8-digit code above</li>
+          <li>Open WhatsApp on your phone</li>
+          <li>Go to Settings → Linked Devices → Link a Device</li>
+          <li>Enter the 8-digit code when prompted</li>
+        </ol>
+      </div>
     </div>
 
     <footer>Need help? Follow the step-by-step guide on the bot server or ask me to walk you through deployment.</footer>
@@ -271,21 +300,31 @@
     });
   });
 
-  // Session management functionality (your existing code remains the same)
+  // Session management functionality - UPDATED FOR PHONE LINKING
   const byNumberBtn = document.getElementById('byNumberBtn');
   const byQRBtn = document.getElementById('byQRBtn');
+  const phoneInput = document.getElementById('phoneNumber');
   const ownerInput = document.getElementById('ownerNumber');
-  const qrArea = document.getElementById('qrArea');
+  const displayArea = document.getElementById('displayArea');
   const qrBox = document.getElementById('qrBox');
-  const qrPlaceholder = document.getElementById('qrPlaceholder');
+  const codeBox = document.getElementById('codeBox');
   const statusText = document.getElementById('statusText');
   const sessionInput = document.getElementById('sessionId');
   const copyBtn = document.getElementById('copyBtn');
+  const displayInfo = document.getElementById('displayInfo');
   let pollingTimer = null;
 
   function setStatus(t, cls) {
     statusText.textContent = t;
     statusText.className = 'status' + (cls ? ' ' + cls : '');
+  }
+
+  function showDisplayArea() {
+    displayArea.style.display = 'flex';
+  }
+
+  function hideDisplayArea() {
+    displayArea.style.display = 'none';
   }
 
   if (copyBtn) {
@@ -295,59 +334,86 @@
     });
   }
 
+  // PHONE NUMBER LINKING - NEW FUNCTION
   async function startByNumber() {
-    const ownerNumber = ownerInput.value.trim();
-    if (!ownerNumber) return alert('Please enter owner phone number first.');
-    setStatus('Requesting bot to link session (will DM owner)...');
+    const phoneNumber = phoneInput.value.trim();
+    if (!phoneNumber) return alert('Please enter your phone number first.');
+    
+    setStatus('Requesting 8-digit linking code...');
+    showDisplayArea();
+    
     try {
       const res = await fetch('/api/start-session', {
         method: 'POST',
         headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ ownerNumber, returnQRCode:false })
+        body: JSON.stringify({ 
+          phoneNumber: phoneNumber,
+          ownerNumber: phoneNumber // Use same number for owner
+        })
       });
+      
       const j = await res.json();
       if (!res.ok) {
-        setStatus('Error: ' + (j.error || JSON.stringify(j)));
+        setStatus('Error: ' + (j.error || JSON.stringify(j)), 'error');
         return;
       }
-      if (j.sessionId) {
-        sessionInput.value = j.sessionId;
-        setStatus('Linked ✔ Session ID received', 'success');
+      
+      // Handle 8-digit code response
+      if (j.linkingCode) {
+        // Show the 8-digit code
+        qrBox.style.display = 'none';
+        codeBox.style.display = 'grid';
+        document.getElementById('codePlaceholder').textContent = j.linkingCode;
+        displayInfo.textContent = 'Use this 8-digit code in WhatsApp: Settings → Linked Devices → Link a Device';
+        setStatus('8-digit code ready! Enter it in WhatsApp.', 'success');
+        
+        // Start polling for connection status
+        if (j.tempId) {
+          pollStatus(j.tempId);
+        }
       } else if (j.tempId) {
-        // fallback: poll
+        setStatus('Pending... waiting for linking code');
         pollStatus(j.tempId);
-        setStatus('Pending... polling for session');
       } else {
         setStatus('Unexpected response: ' + JSON.stringify(j));
       }
     } catch (err) {
-      setStatus('Error connecting: ' + err);
+      setStatus('Error connecting: ' + err, 'error');
     }
   }
 
+  // QR CODE LINKING - UPDATED
   async function startByQR() {
-    qrArea.style.display = 'flex';
+    const ownerNumber = ownerInput.value.trim();
+    
+    showDisplayArea();
+    qrBox.style.display = 'grid';
+    codeBox.style.display = 'none';
     qrBox.innerHTML = '<div class="muted">Waiting for QR…</div>';
-    setStatus('Requesting QR from bot (may take a few seconds)...');
+    setStatus('Requesting QR code...');
+    
     try {
       const res = await fetch('/api/start-session', {
         method: 'POST',
         headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ returnQRCode: true })
+        body: JSON.stringify({ 
+          ownerNumber: ownerNumber,
+          returnQRCode: true 
+        })
       });
+      
       const j = await res.json();
       if (!res.ok) {
-        setStatus('Error: ' + (j.error || JSON.stringify(j)));
+        setStatus('Error: ' + (j.error || JSON.stringify(j)), 'error');
         return;
       }
       
-      // UPDATED QR CODE RENDERING - FIXED VERSION
+      // Handle QR code response
       if (j.qr) {
         qrBox.innerHTML = '';
         
-        // Check if it's already a data URL (image)
         if (typeof j.qr === 'string' && j.qr.startsWith('data:image')) {
-          // Server already converted to image - use directly
+          // Server already converted to image
           const img = document.createElement('img');
           img.src = j.qr;
           img.style.width = '100%';
@@ -355,9 +421,10 @@
           img.style.borderRadius = '8px';
           img.alt = 'WhatsApp QR Code';
           qrBox.appendChild(img);
-          setStatus('Scan the QR with WhatsApp on your phone.');
+          displayInfo.textContent = 'Scan this QR code with WhatsApp: Linked Devices → Link a Device';
+          setStatus('QR code ready! Scan it with your phone.');
         } else {
-          // Raw QR string - convert to image using QRCode library
+          // Raw QR string - convert to image
           const canvas = document.createElement('canvas');
           qrBox.appendChild(canvas);
           try {
@@ -372,14 +439,15 @@
               if (error) {
                 console.error('QR render error:', error);
                 qrBox.innerHTML = '<div class="muted">Failed to render QR. Check console.</div>';
-                setStatus('Failed to render QR code');
+                setStatus('Failed to render QR code', 'error');
               } else {
-                setStatus('Scan the QR with WhatsApp on your phone.');
+                displayInfo.textContent = 'Scan this QR code with WhatsApp: Linked Devices → Link a Device';
+                setStatus('QR code ready! Scan it with your phone.');
               }
             });
           } catch (e) {
             qrBox.innerHTML = '<div class="muted">Failed to render QR</div>';
-            setStatus('Failed to render QR: ' + e);
+            setStatus('Failed to render QR: ' + e, 'error');
           }
         }
       } else if (j.tempId) {
@@ -389,10 +457,11 @@
         setStatus('Unexpected response: ' + JSON.stringify(j));
       }
     } catch (err) {
-      setStatus('Error: ' + err);
+      setStatus('Error: ' + err, 'error');
     }
   }
 
+  // POLLING FUNCTION - UPDATED
   async function pollStatus(tempId) {
     if (pollingTimer) clearInterval(pollingTimer);
     pollingTimer = setInterval(async () => {
@@ -400,62 +469,72 @@
         const res = await fetch('/api/session-status?tempId=' + encodeURIComponent(tempId));
         if (!res.ok) return;
         const j = await res.json();
-        if (j.status === 'qr' && j.qr) {
-          // show QR if not shown already
-          if (!document.querySelector('#qrBox img') && !document.querySelector('#qrBox canvas')) {
-            qrArea.style.display = 'flex';
-            qrBox.innerHTML = '';
-            
-            // UPDATED: Handle both data URL and raw QR
-            if (typeof j.qr === 'string' && j.qr.startsWith('data:image')) {
-              const img = document.createElement('img');
-              img.src = j.qr;
-              img.style.width = '100%';
-              img.style.height = '100%';
-              img.style.borderRadius = '8px';
-              qrBox.appendChild(img);
-            } else {
-              const canvas = document.createElement('canvas');
-              qrBox.appendChild(canvas);
-              try { 
-                QRCode.toCanvas(canvas, j.qr, { 
-                  width: 200,
-                  margin: 2,
-                  color: {
-                    dark: '#000000',
-                    light: '#FFFFFF'
-                  }
-                }); 
-              } catch(e){ 
-                qrBox.innerHTML = '<div class="muted">QR ready — please refresh</div>';
-              }
+        
+        if (j.status === 'code_ready' && j.linkingCode) {
+          // Show 8-digit code if received
+          qrBox.style.display = 'none';
+          codeBox.style.display = 'grid';
+          document.getElementById('codePlaceholder').textContent = j.linkingCode;
+          displayInfo.textContent = 'Use this 8-digit code in WhatsApp: Settings → Linked Devices → Link a Device';
+          setStatus('8-digit code ready! Enter it in WhatsApp.');
+        } else if (j.status === 'qr_ready' && j.qr) {
+          // Show QR code if received
+          showDisplayArea();
+          qrBox.style.display = 'grid';
+          codeBox.style.display = 'none';
+          qrBox.innerHTML = '';
+          
+          if (typeof j.qr === 'string' && j.qr.startsWith('data:image')) {
+            const img = document.createElement('img');
+            img.src = j.qr;
+            img.style.width = '100%';
+            img.style.height = '100%';
+            img.style.borderRadius = '8px';
+            qrBox.appendChild(img);
+          } else {
+            const canvas = document.createElement('canvas');
+            qrBox.appendChild(canvas);
+            try { 
+              QRCode.toCanvas(canvas, j.qr, { 
+                width: 200,
+                margin: 2,
+                color: {
+                  dark: '#000000',
+                  light: '#FFFFFF'
+                }
+              }); 
+            } catch(e){ 
+              qrBox.innerHTML = '<div class="muted">QR ready — please refresh</div>';
             }
-            setStatus('QR ready — scan with WhatsApp');
           }
+          setStatus('QR ready — scan with WhatsApp');
         } else if (j.status === 'connected' && j.sessionId) {
           sessionInput.value = j.sessionId;
-          setStatus('Linked ✔ Session created', 'success');
+          setStatus('Linked ✔ Session created successfully!', 'success');
           clearInterval(pollingTimer);
           pollingTimer = null;
-        } else if (j.status === 'pending') {
-          setStatus('Pending — waiting for QR or approval...');
         } else if (j.status === 'error') {
-          setStatus('Error: ' + (j.error || 'unknown'));
+          setStatus('Error: ' + (j.error || 'unknown'), 'error');
           clearInterval(pollingTimer);
           pollingTimer = null;
         }
       } catch (err) {
-        console.warn('poll error', err);
+        console.warn('Poll error', err);
       }
     }, 2500);
   }
 
+  // Event listeners
   if (byNumberBtn) byNumberBtn.addEventListener('click', startByNumber);
   if (byQRBtn) byQRBtn.addEventListener('click', startByQR);
+
+  // Initialize theme
   try{
-        const prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
-        document.body.setAttribute('data-theme', prefersLight? 'light' : 'dark');
-    }catch(e){ document.body.setAttribute('data-theme','dark'); }
-</script>
+    const prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+    document.body.setAttribute('data-theme', prefersLight? 'light' : 'dark');
+  } catch(e){ 
+    document.body.setAttribute('data-theme','dark'); 
+  }
+  </script>
 </body>
 </html>
