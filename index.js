@@ -1,5 +1,5 @@
-// index.js - MAIN BOT FILE WITH WEB SERVER
-import { makeWASocket, useSingleFileAuthState, fetchLatestBaileysVersion } from '@whiskeysockets/baileys';
+// index.js - MAIN BOT FILE WITH WEB SERVER - FIXED VERSION
+import { makeWASocket, useMultiFileAuthState, fetchLatestBaileysVersion } from '@whiskeysockets/baileys';
 import express from 'express';
 import cors from 'cors';
 import fs from 'fs';
@@ -29,15 +29,17 @@ if (!fs.existsSync(SESS_DIR)) {
   fs.mkdirSync(SESS_DIR, { recursive: true });
 }
 
-// Session generation function (from startsession.js)
+// Session generation function (from startsession.js) - FIXED
 async function startNewSession(ownerNumber = '', onQR) {
   try {
     console.log('🔐 Starting WhatsApp session...');
     
     const { version } = await fetchLatestBaileysVersion();
     const sessionId = 'session_' + Date.now();
-    const authFile = path.join(SESS_DIR, `auth_${sessionId}.json`);
-    const { state, saveCreds } = useSingleFileAuthState(authFile);
+    const authFolder = path.join(SESS_DIR, `auth_${sessionId}`);
+    
+    // FIX: Use MultiFileAuthState instead of SingleFile
+    const { state, saveCreds } = await useMultiFileAuthState(authFolder);
 
     const sock = makeWASocket({
       version,
