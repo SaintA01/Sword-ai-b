@@ -300,7 +300,7 @@
     });
   });
 
-  // Session management functionality - UPDATED FOR PHONE LINKING
+  // Session management functionality - FIXED API URLs
   const byNumberBtn = document.getElementById('byNumberBtn');
   const byQRBtn = document.getElementById('byQRBtn');
   const phoneInput = document.getElementById('phoneNumber');
@@ -313,6 +313,9 @@
   const copyBtn = document.getElementById('copyBtn');
   const displayInfo = document.getElementById('displayInfo');
   let pollingTimer = null;
+
+  // FIXED: Use the correct backend URL
+  const BACKEND_URL = 'https://sword-bot-backend.onrender.com';
 
   function setStatus(t, cls) {
     statusText.textContent = t;
@@ -334,7 +337,7 @@
     });
   }
 
-  // PHONE NUMBER LINKING - NEW FUNCTION
+  // PHONE NUMBER LINKING - FIXED API URL
   async function startByNumber() {
     const phoneNumber = phoneInput.value.trim();
     if (!phoneNumber) return alert('Please enter your phone number first.');
@@ -343,12 +346,13 @@
     showDisplayArea();
     
     try {
-      const res = await fetch('/api/start-session', {
+      // FIXED: Use correct backend URL
+      const res = await fetch(`${BACKEND_URL}/api/start-session`, {
         method: 'POST',
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify({ 
           phoneNumber: phoneNumber,
-          ownerNumber: phoneNumber // Use same number for owner
+          ownerNumber: phoneNumber
         })
       });
       
@@ -374,15 +378,19 @@
       } else if (j.tempId) {
         setStatus('Pending... waiting for linking code');
         pollStatus(j.tempId);
+      } else if (j.sessionId) {
+        sessionInput.value = j.sessionId;
+        setStatus('Linked ✔ Session created successfully!', 'success');
       } else {
         setStatus('Unexpected response: ' + JSON.stringify(j));
       }
     } catch (err) {
       setStatus('Error connecting: ' + err, 'error');
+      console.error('API Error:', err);
     }
   }
 
-  // QR CODE LINKING - UPDATED
+  // QR CODE LINKING - FIXED API URL
   async function startByQR() {
     const ownerNumber = ownerInput.value.trim();
     
@@ -393,7 +401,8 @@
     setStatus('Requesting QR code...');
     
     try {
-      const res = await fetch('/api/start-session', {
+      // FIXED: Use correct backend URL
+      const res = await fetch(`${BACKEND_URL}/api/start-session`, {
         method: 'POST',
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify({ 
@@ -453,21 +462,29 @@
       } else if (j.tempId) {
         setStatus('QR pending — polling for updates...');
         pollStatus(j.tempId);
+      } else if (j.sessionId) {
+        sessionInput.value = j.sessionId;
+        setStatus('Linked ✔ Session created successfully!', 'success');
       } else {
         setStatus('Unexpected response: ' + JSON.stringify(j));
       }
     } catch (err) {
       setStatus('Error: ' + err, 'error');
+      console.error('API Error:', err);
     }
   }
 
-  // POLLING FUNCTION - UPDATED
+  // POLLING FUNCTION - FIXED API URL
   async function pollStatus(tempId) {
     if (pollingTimer) clearInterval(pollingTimer);
     pollingTimer = setInterval(async () => {
       try {
-        const res = await fetch('/api/session-status?tempId=' + encodeURIComponent(tempId));
-        if (!res.ok) return;
+        // FIXED: Use correct backend URL
+        const res = await fetch(`${BACKEND_URL}/api/session-status?tempId=` + encodeURIComponent(tempId));
+        if (!res.ok) {
+          console.error('Polling failed:', res.status);
+          return;
+        }
         const j = await res.json();
         
         if (j.status === 'code_ready' && j.linkingCode) {
