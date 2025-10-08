@@ -41,6 +41,39 @@
                 document.getElementById('status').textContent = '❌ Error: ' + error.message;
             }
         }
+        <button onclick="testBackend()">🧪 Test Backend</button>
+
+        async function testBackend() {
+    setStatus('🧪 Testing backend...', 'loading');
+    
+    try {
+        const response = await fetch(BACKEND_URL + '/api/test', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
+        const data = await response.json();
+        
+        if (data.qr) {
+            document.getElementById('qrContainer').style.display = 'block';
+            const qrElement = document.getElementById('qr');
+            qrElement.innerHTML = '';
+            
+            QRCode.toCanvas(qrElement, data.qr, {
+                width: 250,
+                margin: 2,
+                color: { dark: '#000000', light: '#FFFFFF' }
+            });
+            
+            setStatus('✅ Backend works! But this is a test QR', 'success');
+        } else {
+            setStatus('❌ Test failed: ' + (data.error || 'Unknown'), 'error');
+        }
+        
+    } catch (error) {
+        setStatus('❌ Test failed: ' + error.message, 'error');
+    }
+}
     </script>
 </body>
 </html>
